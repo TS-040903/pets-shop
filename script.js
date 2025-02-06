@@ -91,44 +91,57 @@ const searchInput = document.getElementById('search-input');
 const searchButton = document.getElementById('search-btn');
 const nothingFound = document.getElementById('nothing-found');
 
+function createItemElement(item) {
+    const itemClone = itemTemplate.content.cloneNode(true);
+    itemClone.querySelector('h1').textContent = item.title;
+    itemClone.querySelector('p').textContent = item.description;
+    itemClone.querySelector('img').src = item.img;
+    itemClone.querySelector('.price').textContent = item.price;
+    const tagsDiv = itemClone.querySelector('.tags');
+    item.tags.forEach(tag => {
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'tag';
+        tagSpan.textContent = tag;
+        tagsDiv.appendChild(tagSpan);
+    });
+    return itemClone;
+}
 
 function renderItems(itemsToRender) {
-    shopItemsContainer.innerHTML = ''; // Очищаем контейнер перед рендерингом
-    nothingFound.textContent = ''; // Скрываем сообщение "Ничего не найдено"
+    shopItemsContainer.innerHTML = '';
+    nothingFound.textContent = '';
 
     if (itemsToRender.length === 0) {
         nothingFound.textContent = 'Ничего не найдено';
         return;
     }
 
-    itemsToRender.forEach(item => {
-        const itemClone = itemTemplate.content.cloneNode(true);
-        const h1 = itemClone.querySelector('h1');
-        const p = itemClone.querySelector('p');
-        const img = itemClone.querySelector('img');
-        const priceSpan = itemClone.querySelector('.price');
-        const tagsDiv = itemClone.querySelector('.tags');
-
-        h1.textContent = item.title;
-        p.textContent = item.description;
-        img.src = item.img;
-        priceSpan.textContent = item.price;
-        item.tags.forEach(tag => {
-            const tagSpan = document.createElement('span');
-            tagSpan.classList.add('tag');
-            tagSpan.textContent = tag;
-            tagsDiv.appendChild(tagSpan);
-        });
-
-        shopItemsContainer.appendChild(itemClone);
-    });
+    const fragment = document.createDocumentFragment();
+    itemsToRender.forEach(item => fragment.appendChild(createItemElement(item)));
+    shopItemsContainer.appendChild(fragment);
 }
+
+
+function searchItems(searchTerm) {
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    const filteredItems = items.filter(item => {
+        return (item.title.toLowerCase().includes(lowerCaseSearchTerm) ||
+            item.description.toLowerCase().includes(lowerCaseSearchTerm) ||
+            item.tags.some(tag => tag.toLowerCase().includes(lowerCaseSearchTerm)));
+    });
+    renderItems(filteredItems);
+}
+
 
 renderItems(items);
 
-
 searchButton.addEventListener('click', () => {
-    const searchTerm = searchInput.value.trim().toLowerCase();
-    const filteredItems = items.filter(item => item.title.toLowerCase().includes(searchTerm));
-    renderItems(filteredItems);
+    searchItems(searchInput.value);
+});
+
+
+searchInput.addEventListener('keyup', (event) => {
+    if (event.key === 'Enter') {
+        searchItems(searchInput.value);
+    }
 });
